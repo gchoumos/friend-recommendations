@@ -16,12 +16,12 @@ class DataLoader(object):
 		start_time = timeit.default_timer()
 		for edge in edges:
 			# edge = edge.split()
-			nodes.append(edge[0])
-			nodes.append(edge[1])
+			nodes.append(int(edge[0]))
+			nodes.append(int(edge[1]))
 		elapsed = timeit.default_timer() - start_time
-		print("Get nodes - Duration: {0}".format(elapsed))
+		print "Get nodes - Duration: {0}".format(elapsed)
 
-		print("nodes list length: " + str(len(nodes)))
+		print "nodes list length: %s" % str(len(nodes))
 
 		return set(nodes)
 
@@ -36,8 +36,9 @@ class DataLoader(object):
 
 		start_time = timeit.default_timer()
 		for line in lines:
-			edges.append(line.split())
+			line = line.split()
+			edges.append([int(line[0]),int(line[1])])
 		elapsed = timeit.default_timer() - start_time
-		print("Get edges - Duration: {0}".format(elapsed))
+		print "Get edges - Duration: {0}".format(elapsed)
 
 		return edges
