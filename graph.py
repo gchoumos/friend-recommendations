@@ -1,4 +1,5 @@
 import snap
+import math
 
 class UNGraph(object):
 	""" Undirected Graph class """
@@ -60,3 +61,23 @@ class UNGraph(object):
 		scores.sort(key=lambda x: x[1], reverse=True)
 		return scores[:n_rec]
 
+	def recommend_friends_AA(self, node_id, n_rec):
+		"""
+			Adamic and Adar scoring similarity
+		"""
+		scores = []
+		neighbours_b = self.graph.GetNI(node_id).GetOutDeg()
+		# Iterate through all the nodes
+		for node in self.graph.Nodes():
+			sum = 0
+			# Get the number of neighbours for node and node_id
+			node = node.GetId()
+			neighbours = snap.TIntV()
+			if node != node_id and not self.graph.IsEdge(node,node_id):
+				snap.GetCmnNbrs(self.graph,node,node_id,neighbours)
+				for c in neighbours:
+					sum += 1 / math.log(self.graph.GetNI(c).GetOutDeg(),2)
+				scores.append([node, sum])
+		scores.sort(key=lambda x: x[0])
+		scores.sort(key=lambda x: x[1], reverse=True)
+		return scores[:n_rec]

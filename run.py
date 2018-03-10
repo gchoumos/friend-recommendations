@@ -60,5 +60,12 @@ def main():
 		for recommendation in un_graph.recommend_friends_J(node,n_recs):
 			print "{0}\t{1}".format(recommendation[0],recommendation[1])
 
+		print "Adamic & Adar method"
+		print "--------------------"
+		print "Node\t\tScore"
+		for recommendation in un_graph.recommend_friends_AA(node,n_recs):
+			print "{0}\t{1}".format(recommendation[0],recommendation[1])
+
+
 if __name__ == '__main__':
     main()
