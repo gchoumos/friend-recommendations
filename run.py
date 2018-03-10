@@ -45,14 +45,20 @@ def main():
 
 	for node in SETTINGS["test_nodeIDs"]:
 		print "Computing recommended friendships for node {0} ...".format(node)
-		# Get the configured number of friend recommendations (Defaults to 10)
-		recs = un_graph.recommend_friends_CN(node, SETTINGS["rec_num"])
+		n_recs = SETTINGS["rec_num"]
 
 		# Print them a bit more nicely than just throwing them on screen
-		print "Node\tScore"
-		for recommendation in recs:
+		print "Common Friends method"
+		print "---------------------"
+		print "Node\t\tScore"
+		for recommendation in un_graph.recommend_friends_CN(node, n_recs):
 			print "{0}\t{1}".format(recommendation[0],recommendation[1])
 
+		print "Jaccard method"
+		print "--------------"
+		print "Node\t\tScore"
+		for recommendation in un_graph.recommend_friends_J(node,n_recs):
+			print "{0}\t{1}".format(recommendation[0],recommendation[1])
 
 if __name__ == '__main__':
     main()

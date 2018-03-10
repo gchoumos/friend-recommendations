@@ -26,12 +26,7 @@ class UNGraph(object):
 			neighbours = snap.TIntV()
 			# don't take into account itself and those it's already connected to
 			if node != node_id and not self.graph.IsEdge(node,node_id):
-				#print "Nodes {0} and {1}: GOOD".format(node,node_id)
 				scores.append([node, snap.GetCmnNbrs(self.graph,node,node_id,neighbours)])
-				#print "Nodes {0} and {1}: GOOD - Score: {2}".format(node,node_id,snap.GetCmnNbrs(self.graph,node,node_id,neighbours))
-			else:
-				#print "Nodes {0} and {1}: BAD".format(node,node_id)
-				pass
 
 		# Sort the list based on the first item (the score) - Descending
 		# Then sort by the nodeId (Ascending)
@@ -39,5 +34,29 @@ class UNGraph(object):
 		scores.sort(key=lambda x: x[1], reverse=True)
 		# And print the first n_rec ones - Defaults to 10
 		# If the number of items is < n_rec it'll just print them all.
+		return scores[:n_rec]
+
+	def recommend_friends_J(self, node_id, n_rec):
+		"""
+			Jaccard coefficient.
+			--------------------
+			For the numerator we will do the same as what we did for the Common Neighbours
+			For the denominator we will add the number of neighbours of A to the number of
+			neighbours of B and then subtract the number of common neighbours (ie. the numerator)
+		"""
+		scores = []
+		neighbours_b = self.graph.GetNI(node_id).GetOutDeg()
+		# Iterate through all the nodes
+		for node in self.graph.Nodes():
+			# Get the number of neighbours for node and node_id
+			neighbours_a = node.GetOutDeg()
+			node = node.GetId()
+			neighbours = snap.TIntV()
+			if node != node_id and not self.graph.IsEdge(node,node_id):
+				common = snap.GetCmnNbrs(self.graph,node,node_id,neighbours)
+				union = neighbours_a + neighbours_b - common
+				scores.append([node, common / float(union)])
+		scores.sort(key=lambda x: x[0])
+		scores.sort(key=lambda x: x[1], reverse=True)
 		return scores[:n_rec]
 
