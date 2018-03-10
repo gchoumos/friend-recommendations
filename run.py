@@ -4,6 +4,8 @@
 			get the nodes as well the edges. Or maybe not. My initial thought on this
 			is to have the constructor of the DataLoader to call the corresponding
 			procs. But I'm not yet sure about this and whether I prefer it or not.
+		-	If using snap is eventually acceptable, add instructions for installation
+			in the README.md file.
 
 	THOUGHTS:
 		-	I don't think we have to do anything twice as instructed by the assignment
@@ -39,9 +41,18 @@ def main():
 
 	# Create the undirected graph
 	print "Creating the undirected graph ..."
-
-
 	un_graph = UNGraph(nodes,edges)
+
+	for node in SETTINGS["test_nodeIDs"]:
+		print "Computing recommended friendships for node {0} ...".format(node)
+		# Get the configured number of friend recommendations (Defaults to 10)
+		recs = un_graph.recommend_friends_CN(node, SETTINGS["rec_num"])
+
+		# Print them a bit more nicely than just throwing them on screen
+		print "Node\tScore"
+		for recommendation in recs:
+			print "{0}\t{1}".format(recommendation[0],recommendation[1])
+
 
 if __name__ == '__main__':
     main()

@@ -34,11 +34,8 @@ class DataLoader(object):
 		with open(self.filename) as f:
 			lines = f.readlines()
 
-		start_time = timeit.default_timer()
 		for line in lines:
 			line = line.split()
 			edges.append([int(line[0]),int(line[1])])
-		elapsed = timeit.default_timer() - start_time
-		print "Get edges - Duration: {0}".format(elapsed)
 
 		return edges
