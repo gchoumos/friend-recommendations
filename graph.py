@@ -1,5 +1,6 @@
 import snap
 import math
+import random
 
 class UNGraph(object):
 	""" Undirected Graph class """
@@ -11,6 +12,10 @@ class UNGraph(object):
 	def __init__(self, nodes=[], edges=[]):
 		self.nodes = nodes
 		self.edges = edges
+
+		SEED = 56427
+		random.seed(SEED)
+
 		# Add the nodes
 		for node in nodes:
 			self.graph.AddNode(node)
@@ -81,3 +86,39 @@ class UNGraph(object):
 		scores.sort(key=lambda x: x[0])
 		scores.sort(key=lambda x: x[1], reverse=True)
 		return scores[:n_rec]
+
+	def recommend_friends_random(self, node_id, n_rec):
+		""" Random recommendations """
+		not_friends = set(self.nodes) - set(self.graph.GetNI(node_id).GetOutEdges())
+		if n_rec > len(not_friends):
+			n_rec = len(not_friends)
+		return random.sample(not_friends,n_rec)
+
+	def bonus_recommend_friends_preferencial(self, node_id, n_rec):
+		""" Preferencial Attachment """
+		scores = []
+		num_friends = len(list(self.graph.GetNI(node_id).GetOutEdges()))
+		# Iterate through all the nodes
+		for node in self.graph.Nodes():
+			# Get the number of neighbours for node and node_id
+			p_node = node.GetId()
+			if p_node != node_id and not self.graph.IsEdge(p_node,node_id):
+				p_num_friends = len(list(node.GetOutEdges()))
+				scores.append([p_node, num_friends * p_num_friends])
+		scores.sort(key=lambda x: x[0])
+		scores.sort(key=lambda x: x[1], reverse=True)
+		return scores[:n_rec] 
+
+	def del_edge(self,source,dest):
+		""" Removes an edge from the graph """
+		self.graph.DelEdge(source,dest)
+
+	def add_edge(self,source,dest):
+		""" Adds an edge to the graph """
+		self.graph.AddEdge(source,dest)
+
+	# def get_nodes_from_id_list(self,id_list):
+	# 	"""
+	# 		Receives a list of node ids and returns the corresponding nodes.
+	# 	"""
+	# 	nodes = []
