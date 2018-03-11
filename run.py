@@ -123,9 +123,11 @@ def main():
 	# Random removal and re-suggestions #
 	#####################################
 
-	avg_rank_common = []
+	avg_rank_common  = []
 	avg_rank_jaccard = []
-	avg_rank_aa = []
+	avg_rank_aa      = []
+	avg_rank_rnd     = []
+	avg_rank_pref    = []
 	# Perform the experiment the configured amount of times - Default: 100
 	for i in range(SETTINGS['experiments']):
 		# Randomly choose 1 of the friends
@@ -140,13 +142,18 @@ def main():
 		f1_rec_common  = [x[0] for x in un_graph.recommend_friends_CN(F1,n_recs)]
 		f1_rec_jaccard = [x[0] for x in un_graph.recommend_friends_J(F1,n_recs)]
 		f1_rec_aa      = [x[0] for x in un_graph.recommend_friends_AA(F1,n_recs)]
+		f1_rec_rnd     = un_graph.recommend_friends_random(F1,n_recs)
+		f1_rec_pref    = [x[0] for x in un_graph.bonus_recommend_friends_preferencial(F1,n_recs)]
 
 		f2_rec_common  = [x[0] for x in un_graph.recommend_friends_CN(F2,n_recs)]
 		f2_rec_jaccard = [x[0] for x in un_graph.recommend_friends_J(F2,n_recs)]
 		f2_rec_aa      = [x[0] for x in un_graph.recommend_friends_AA(F2,n_recs)]
+		f2_rec_rnd     = un_graph.recommend_friends_random(F2,n_recs)
+		f2_rec_pref    = [x[0] for x in un_graph.bonus_recommend_friends_preferencial(F2,n_recs)]
 
-		rank_common_f1 = rank_jaccard_f1 = rank_aa_f1 = 0
-		rank_common_f2 = rank_jaccard_f2 = rank_aa_f2 = 0
+
+		rank_common_f1 = rank_jaccard_f1 = rank_aa_f1 = rank_rnd_f1 = rank_pref_f1 = -1
+		rank_common_f2 = rank_jaccard_f2 = rank_aa_f2 = rank_rnd_f2 = rank_pref_f2 = -1
 
 		if F2 in f1_rec_common:
 			rank_common_f1 = f1_rec_common.index(F2)
@@ -154,6 +161,10 @@ def main():
 			rank_jaccard_f1 = f1_rec_jaccard.index(F2)
 		if F2 in f1_rec_aa:
 			rank_aa_f1 = f1_rec_aa.index(F2)
+		if F2 in f1_rec_rnd:
+			rank_rnd_f1 = f1_rec_rnd.index(F2)
+		if F2 in f1_rec_pref:
+			rank_pref_f1 = f1_rec_pref.index(F2)
 
 		if F1 in f2_rec_common:
 			rank_common_f2 = f2_rec_common.index(F1)
@@ -161,16 +172,27 @@ def main():
 			rank_jaccard_f2 = f2_rec_jaccard.index(F1)
 		if F1 in f2_rec_aa:
 			rank_aa_f2 = f2_rec_aa.index(F1)
+		if F1 in f2_rec_rnd:
+			rank_rnd_f2 = f2_rec_rnd.index(F1)
+		if F1 in f2_rec_pref:
+			rank_pref_f2 = f2_rec_pref.index(F1)
 
-		if rank_common_f1 == 0 or rank_common_f2 == 0 \
-			or rank_jaccard_f1 == 0 or rank_jaccard_f2 == 0 \
-			or rank_aa_f1 == 0 or rank_aa_f2 == 0:
+		# We won't even consider the random reccommendation here or the bonus ones
+		# or they'll destroy our metrics.
+		if rank_common_f1 == -1 or rank_common_f2 == -1 \
+			or rank_jaccard_f1 == -1 or rank_jaccard_f2 == -1 \
+			or rank_aa_f1 == -1 or rank_aa_f2 == -1:
 			un_graph.add_edge(F1,F2)
 			continue
 
 		avg_rank_common.append((rank_common_f1 + rank_common_f2) / 2.0)
 		avg_rank_jaccard.append((rank_jaccard_f1 + rank_jaccard_f2) / 2.0)
 		avg_rank_aa.append((rank_aa_f1 + rank_aa_f2) / 2.0)
+		if rank_rnd_f1 != -1 and rank_rnd_f2 != -1:
+			avg_rank_rnd.append((rank_rnd_f1 + rank_rnd_f2) / 2.0)
+		if rank_pref_f1 != -1 and rank_pref_f2 != -1:
+			avg_rank_pref.append((rank_pref_f1 + rank_pref_f2) / 2.0)
+
 
 		un_graph.add_edge(F1,F2)
 
@@ -183,6 +205,16 @@ def main():
 	print "Jaccard Avg Rank: {0}".format(sum(avg_rank_jaccard)/float(len(avg_rank_jaccard)))
 	print "AA Hits: {0}".format(len(avg_rank_aa))
 	print "AA Avg Rank: {0}".format(sum(avg_rank_aa)/float(len(avg_rank_aa)))
+	print "(Bonus) Preferencial Attachment Hits: {0}".format(len(avg_rank_pref))
+	if len(avg_rank_pref) != 0:
+		print "(Bonus) Preferencial Attachment Avg Rank: {0}".format(sum(avg_rank_pref)/float(len(avg_rank_pref)))
+	else:
+		print "(Bonus) Preferencial Attachment Avg Rank: Infinity (which is bad)"
+	print "Random Hits: {0}".format(len(avg_rank_rnd))
+	if len(avg_rank_rnd) != 0:
+		print "Random Avg Rank: {0}".format(sum(avg_rank_rnd)/float(len(avg_rank_rnd)))
+	else:
+		print "Random Avg Rank: Infinity (which is bad)"
 
 def _print_result_tables(node,method,recs):
 	"""
