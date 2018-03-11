@@ -75,7 +75,10 @@ def main():
 	# We keep both the full output of the recommendation computations as well
 	# as the nodes separately in order to make our lives easier for the comparisons
 	rec_results = {}
-	same_recommendations = 0
+	same_all   = 0
+	same_cn_j  = 0
+	same_cn_aa = 0
+	same_j_aa  = 0
 
 	for node in node_multiples:
 		rec_results[node] = {'cn':{},'j':{},'aa':{}}
@@ -91,25 +94,30 @@ def main():
 
 		# It is not really necessary to keep the boolean outcome of the results comparison
 		# in the dict, but we keep it anyway.
-		rec_results[node]['same'] = rec_results[node]['cn']['nodes'] == \
-									rec_results[node]['j']['nodes']  == \
-									rec_results[node]['aa']['nodes']
 
-		if rec_results[node]['same']:
-			same_recommendations += 1
+		rec_results[node]['same_all'] =	rec_results[node]['cn']['nodes'] == \
+										rec_results[node]['j']['nodes']  == \
+										rec_results[node]['aa']['nodes']
 
-	print "Results for the nodes with id's being multiples of {0}:".format(SETTINGS['multiples'])
-	print "Total nodes: {0}\tSame recommendations: {1}".format(len(node_multiples),same_recommendations)
+		rec_results[node]['same_cn_j'] = rec_results[node]['cn']['nodes'] == \
+										 rec_results[node]['j']['nodes']
 
-	# print "rec_results[100]['cn']['full']:"
-	# print rec_results[100]['cn']['full']
-	# print "rec_results[100]['cn']['nodes']:"
-	# print rec_results[100]['cn']['nodes']
-	# print "rec_results[100]['j']['nodes']:"
-	# print rec_results[100]['j']['nodes']
-	# print "rec_results[100]['aa']['nodes']:"
-	# print rec_results[100]['aa']['nodes']
-	# print "Same: {0}".format(rec_results[100]['same'])
+		rec_results[node]['same_cn_aa'] = rec_results[node]['cn']['nodes'] == \
+										  rec_results[node]['aa']['nodes']
+
+		rec_results[node]['same_j_aa'] = rec_results[node]['j']['nodes'] == \
+										 rec_results[node]['aa']['nodes']
+
+		# This is very fancy
+		same_all   += 1*rec_results[node]['same_all']
+		same_cn_j  += 1*rec_results[node]['same_cn_j']
+		same_cn_aa += 1*rec_results[node]['same_cn_aa']
+		same_j_aa  += 1*rec_results[node]['same_j_aa']
+
+	print "Comparison results for nodes with id's being multiples " \
+		  "of {0}".format(SETTINGS['multiples'])
+
+	_print_comparisons(len(node_multiples), same_all, same_cn_j,same_cn_aa, same_j_aa)
 	
 
 def _print_result_tables(node,method,recs):
@@ -130,9 +138,25 @@ def _print_result_tables(node,method,recs):
 	table = SingleTable(table_data)
 	table.justify_columns[0] = 'right'
 	table.justify_columns[1] = 'right'
-	table.justify_columns[2] = 'right'
+	table.justify_columns[2] = 'left'
 
 	print "\n{0} - Recommendations for Node: {1}".format(method,node)
+	print table.table
+
+def _print_comparisons(multiples_len, s_all, s_cn_j, s_cn_aa, s_j_aa):
+	table_data = [['','Same','Total','Percentage']]
+	table_data.append(['ALL',s_all,multiples_len,100*s_all/float(multiples_len)])
+	table_data.append(['CN - J',s_cn_j,multiples_len,100*s_cn_j/float(multiples_len)])
+	table_data.append(['CN - AA',s_cn_aa,multiples_len,100*s_cn_aa/float(multiples_len)])
+	table_data.append(['J - AA',s_j_aa,multiples_len,100*s_j_aa/float(multiples_len)])
+
+	avg_all = 100*((s_cn_j+s_cn_aa+s_j_aa)/(3*float(multiples_len)))
+	table_data.append(['Avg Similarity','-','-',avg_all])
+
+	table = SingleTable(table_data)
+	table.inner_footing_row_border = True
+
+	print "Fancy results table:"
 	print table.table
 
 if __name__ == '__main__':
