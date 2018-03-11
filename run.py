@@ -11,7 +11,10 @@
 	THOUGHTS:
 		-	I don't think we have to do anything twice as instructed by the assignment
 			description to make an undirected graph. We can use the TUNGraph for this
-			purpose.s
+			purpose.
+		-	After a few minutes of debate and discussions, we consider node id 0 as a
+			multiple of 100 (100*0 = 0).
+			Supporting evidence: http://mathforum.org/library/drmath/view/60913.html
 """
 
 from settings import SETTINGS
@@ -54,7 +57,7 @@ def main():
 		print "Common Friends method computation ..."
 		rec_common = un_graph.recommend_friends_CN(node,n_recs)
 		print "Jaccard method computation ..."
-		rec_jaccard = un_graph.recommend_friends_CN(node,n_recs)
+		rec_jaccard = un_graph.recommend_friends_J(node,n_recs)
 		print "Adamic & Adar method computation ..."
 		rec_aa = un_graph.recommend_friends_AA(node,n_recs)
 
@@ -62,6 +65,52 @@ def main():
 		_print_result_tables(node,'Jaccard',rec_jaccard)
 		_print_result_tables(node,'Adamic & Adar',rec_aa)
 
+	# Get the ids that are mutliples of the configured value (default: 100)
+	node_multiples = [x for x in nodes if x%SETTINGS['multiples'] == 0]
+	# print "Node multiples of {0}:".format(SETTINGS['multiples'])
+	# print node_multiples
+	# print "Length: {0}".format(len(node_multiples))
+
+	# For each of those node ids, get top 10 recommendations and scores
+	# We keep both the full output of the recommendation computations as well
+	# as the nodes separately in order to make our lives easier for the comparisons
+	rec_results = {}
+	same_recommendations = 0
+
+	for node in node_multiples:
+		rec_results[node] = {'cn':{},'j':{},'aa':{}}
+
+		rec_results[node]['cn']['full']  = un_graph.recommend_friends_CN(node,n_recs)
+		rec_results[node]['cn']['nodes'] = [x[0] for x in rec_results[node]['cn']['full']]
+
+		rec_results[node]['j']['full']  = un_graph.recommend_friends_J(node,n_recs)
+		rec_results[node]['j']['nodes'] = [x[0] for x in rec_results[node]['j']['full']]
+
+		rec_results[node]['aa']['full'] = un_graph.recommend_friends_AA(node,n_recs)
+		rec_results[node]['aa']['nodes'] = [x[0] for x in rec_results[node]['aa']['full']]
+
+		# It is not really necessary to keep the boolean outcome of the results comparison
+		# in the dict, but we keep it anyway.
+		rec_results[node]['same'] = rec_results[node]['cn']['nodes'] == \
+									rec_results[node]['j']['nodes']  == \
+									rec_results[node]['aa']['nodes']
+
+		if rec_results[node]['same']:
+			same_recommendations += 1
+
+	print "Results for the nodes with id's being multiples of {0}:".format(SETTINGS['multiples'])
+	print "Total nodes: {0}\tSame recommendations: {1}".format(len(node_multiples),same_recommendations)
+
+	# print "rec_results[100]['cn']['full']:"
+	# print rec_results[100]['cn']['full']
+	# print "rec_results[100]['cn']['nodes']:"
+	# print rec_results[100]['cn']['nodes']
+	# print "rec_results[100]['j']['nodes']:"
+	# print rec_results[100]['j']['nodes']
+	# print "rec_results[100]['aa']['nodes']:"
+	# print rec_results[100]['aa']['nodes']
+	# print "Same: {0}".format(rec_results[100]['same'])
+	
 
 def _print_result_tables(node,method,recs):
 	"""

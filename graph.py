@@ -81,3 +81,9 @@ class UNGraph(object):
 		scores.sort(key=lambda x: x[0])
 		scores.sort(key=lambda x: x[1], reverse=True)
 		return scores[:n_rec]
+
+	# def get_nodes_from_id_list(self,id_list):
+	# 	"""
+	# 		Receives a list of node ids and returns the corresponding nodes.
+	# 	"""
+	# 	nodes = []

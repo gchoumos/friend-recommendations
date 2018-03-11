@@ -13,13 +13,10 @@ class DataLoader(object):
 		"""
 		nodes = []
 
-		start_time = timeit.default_timer()
 		for edge in edges:
 			# edge = edge.split()
 			nodes.append(int(edge[0]))
 			nodes.append(int(edge[1]))
-		elapsed = timeit.default_timer() - start_time
-		print "Get nodes - Duration: {0}".format(elapsed)
 
 		print "nodes list length: %s" % str(len(nodes))
 
