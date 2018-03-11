@@ -31,6 +31,9 @@ edges = set()
 def main():
 	print("Starting app...")
 
+	SEED = 56427
+	random.seed(SEED)
+
 	data = DataLoader(SETTINGS['input_filename'])
 
 	# Get the edges from the input file
@@ -67,9 +70,6 @@ def main():
 
 	# Get the ids that are mutliples of the configured value (default: 100)
 	node_multiples = [x for x in nodes if x%SETTINGS['multiples'] == 0]
-	# print "Node multiples of {0}:".format(SETTINGS['multiples'])
-	# print node_multiples
-	# print "Length: {0}".format(len(node_multiples))
 
 	# For each of those node ids, get top 10 recommendations and scores
 	# We keep both the full output of the recommendation computations as well
@@ -114,11 +114,75 @@ def main():
 		same_cn_aa += 1*rec_results[node]['same_cn_aa']
 		same_j_aa  += 1*rec_results[node]['same_j_aa']
 
-	print "Comparison results for nodes with id's being multiples " \
+	print "Comparison results for nodes with IDs being multiples " \
 		  "of {0}".format(SETTINGS['multiples'])
 
 	_print_comparisons(len(node_multiples), same_all, same_cn_j,same_cn_aa, same_j_aa)
-	
+
+	#####################################
+	# Random removal and re-suggestions #
+	#####################################
+
+	avg_rank_common = []
+	avg_rank_jaccard = []
+	avg_rank_aa = []
+	# Perform the experiment the configured amount of times - Default: 100
+	for i in range(SETTINGS['experiments']):
+		# Randomly choose 1 of the friends
+		F1 = random.choice(node_multiples)
+		# Randomly choose 1 of its friends
+		F2 = random.choice(list(un_graph.graph.GetNI(F1).GetOutEdges()))
+		# print "F1 node id: {0}\tF2 node id: {1}".format(F1,F2)
+		# print "Removing edge [{0},{1}] ...".format(F1,F2)
+		un_graph.del_edge(F1,F2)
+
+		# Compute friend recommendations after the edge deletion for both F1 and F2
+		f1_rec_common  = [x[0] for x in un_graph.recommend_friends_CN(F1,n_recs)]
+		f1_rec_jaccard = [x[0] for x in un_graph.recommend_friends_J(F1,n_recs)]
+		f1_rec_aa      = [x[0] for x in un_graph.recommend_friends_AA(F1,n_recs)]
+
+		f2_rec_common  = [x[0] for x in un_graph.recommend_friends_CN(F2,n_recs)]
+		f2_rec_jaccard = [x[0] for x in un_graph.recommend_friends_J(F2,n_recs)]
+		f2_rec_aa      = [x[0] for x in un_graph.recommend_friends_AA(F2,n_recs)]
+
+		rank_common_f1 = rank_jaccard_f1 = rank_aa_f1 = 0
+		rank_common_f2 = rank_jaccard_f2 = rank_aa_f2 = 0
+
+		if F2 in f1_rec_common:
+			rank_common_f1 = f1_rec_common.index(F2)
+		if F2 in f1_rec_jaccard:
+			rank_jaccard_f1 = f1_rec_jaccard.index(F2)
+		if F2 in f1_rec_aa:
+			rank_aa_f1 = f1_rec_aa.index(F2)
+
+		if F1 in f2_rec_common:
+			rank_common_f2 = f2_rec_common.index(F1)
+		if F1 in f2_rec_jaccard:
+			rank_jaccard_f2 = f2_rec_jaccard.index(F1)
+		if F1 in f2_rec_aa:
+			rank_aa_f2 = f2_rec_aa.index(F1)
+
+		if rank_common_f1 == 0 or rank_common_f2 == 0 \
+			or rank_jaccard_f1 == 0 or rank_jaccard_f2 == 0 \
+			or rank_aa_f1 == 0 or rank_aa_f2 == 0:
+			un_graph.add_edge(F1,F2)
+			continue
+
+		avg_rank_common.append((rank_common_f1 + rank_common_f2) / 2.0)
+		avg_rank_jaccard.append((rank_jaccard_f1 + rank_jaccard_f2) / 2.0)
+		avg_rank_aa.append((rank_aa_f1 + rank_aa_f2) / 2.0)
+
+		un_graph.add_edge(F1,F2)
+
+
+	print "Total Successful Experiments"
+	print "----------------------------"
+	print "Common Hits: {0}".format(len(avg_rank_common))
+	print "Common Avg Rank: {0}".format(sum(avg_rank_common)/float(len(avg_rank_common)))
+	print "Jaccard Hits: {0}".format(len(avg_rank_jaccard))
+	print "Jaccard Avg Rank: {0}".format(sum(avg_rank_jaccard)/float(len(avg_rank_jaccard)))
+	print "AA Hits: {0}".format(len(avg_rank_aa))
+	print "AA Avg Rank: {0}".format(sum(avg_rank_aa)/float(len(avg_rank_aa)))
 
 def _print_result_tables(node,method,recs):
 	"""
@@ -148,7 +212,7 @@ def _print_comparisons(multiples_len, s_all, s_cn_j, s_cn_aa, s_j_aa):
 	table_data.append(['ALL',s_all,multiples_len,100*s_all/float(multiples_len)])
 	table_data.append(['CN - J',s_cn_j,multiples_len,100*s_cn_j/float(multiples_len)])
 	table_data.append(['CN - AA',s_cn_aa,multiples_len,100*s_cn_aa/float(multiples_len)])
-	table_data.append(['J - AA',s_j_aa,multiples_len,100*s_j_aa/float(multiples_len)])
+	table_data.append(['J  - AA',s_j_aa,multiples_len,100*s_j_aa/float(multiples_len)])
 
 	avg_all = 100*((s_cn_j+s_cn_aa+s_j_aa)/(3*float(multiples_len)))
 	table_data.append(['Avg Similarity','-','-',avg_all])

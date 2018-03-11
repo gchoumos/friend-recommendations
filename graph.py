@@ -82,6 +82,14 @@ class UNGraph(object):
 		scores.sort(key=lambda x: x[1], reverse=True)
 		return scores[:n_rec]
 
+	def del_edge(self,source,dest):
+		""" Removes an edge from the graph """
+		self.graph.DelEdge(source,dest)
+
+	def add_edge(self,source,dest):
+		""" Adds an edge to the graph """
+		self.graph.AddEdge(source,dest)
+
 	# def get_nodes_from_id_list(self,id_list):
 	# 	"""
 	# 		Receives a list of node ids and returns the corresponding nodes.

@@ -22,11 +22,16 @@
 		multiples of 100. So this is the default value. However, it can be changed
 		to whatever you like (not fail-proof yet though so give it reasonable values).
 
+	* experiments
+		the number of times to conduct the experiment of removing a random edge and then
+		suggesting neighbours to evaluate the models performance
+
 """
 
 SETTINGS = {
 	'input_filename': '../facebook_combined.txt',
 	'test_nodeIDs': [14, 35, 107, 1126],
 	'rec_num': 10,
-	'multiples': 100
+	'multiples': 100,
+	'experiments': 100
 }
