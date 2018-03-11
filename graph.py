@@ -5,8 +5,7 @@ import random
 class UNGraph(object):
 	""" Undirected Graph class """
 
-	# Use snap's TUNGraph
-	# This means that we won't have to add each edge twice (one for each direction)
+	# Use snap's TUNGraph - We won't have to add each edge twice.
 	graph = snap.TUNGraph.New()
 
 	def __init__(self, nodes=[], edges=[]):
@@ -16,17 +15,15 @@ class UNGraph(object):
 		SEED = 56427
 		random.seed(SEED)
 
-		# Add the nodes
+		# Add nodes and edges
 		for node in nodes:
 			self.graph.AddNode(node)
-		# Add the edges
 		for edge in edges:
 			self.graph.AddEdge(edge[0],edge[1])
 
 	# Recommend friends based on the Common Neighbours
 	def recommend_friends_CN(self, node_id, n_rec):
 		scores = []
-		# Iterate through all the nodes
 		for node in self.graph.Nodes():
 			node = node.GetId()
 			neighbours = snap.TIntV()
@@ -35,7 +32,7 @@ class UNGraph(object):
 				scores.append([node, snap.GetCmnNbrs(self.graph,node,node_id,neighbours)])
 
 		# Sort the list based on the first item (the score) - Descending
-		# Then sort by the nodeId (Ascending)
+		# Then sort by the nodeId - Ascending
 		scores.sort(key=lambda x: x[0])
 		scores.sort(key=lambda x: x[1], reverse=True)
 		# And print the first n_rec ones - Defaults to 10
@@ -52,7 +49,7 @@ class UNGraph(object):
 		"""
 		scores = []
 		neighbours_b = self.graph.GetNI(node_id).GetOutDeg()
-		# Iterate through all the nodes
+
 		for node in self.graph.Nodes():
 			# Get the number of neighbours for node and node_id
 			neighbours_a = node.GetOutDeg()
@@ -67,12 +64,9 @@ class UNGraph(object):
 		return scores[:n_rec]
 
 	def recommend_friends_AA(self, node_id, n_rec):
-		"""
-			Adamic and Adar scoring similarity
-		"""
+		""" Adamic and Adar scoring similarity"""
 		scores = []
 		neighbours_b = self.graph.GetNI(node_id).GetOutDeg()
-		# Iterate through all the nodes
 		for node in self.graph.Nodes():
 			sum = 0
 			# Get the number of neighbours for node and node_id
@@ -116,9 +110,3 @@ class UNGraph(object):
 	def add_edge(self,source,dest):
 		""" Adds an edge to the graph """
 		self.graph.AddEdge(source,dest)
-
-	# def get_nodes_from_id_list(self,id_list):
-	# 	"""
-	# 		Receives a list of node ids and returns the corresponding nodes.
-	# 	"""
-	# 	nodes = []

@@ -5,13 +5,13 @@
 			is to have the constructor of the DataLoader to call the corresponding
 			procs. But I'm not yet sure about this and whether I prefer it or not.
 		-	If using snap is eventually acceptable, add instructions for installation
-			in the README.md file.
+			in the README.md file. UPDATE: It is.
 		-	Mention the terminaltables installation as well in the README.md (through pip).
 
 	THOUGHTS:
 		-	I don't think we have to do anything twice as instructed by the assignment
-			description to make an undirected graph. We can use the TUNGraph for this
-			purpose.
+			description to make an undirected graph. That's if we use snap's TUNGraph
+			for this purpose.
 		-	After a few minutes of debate and discussions, we consider node id 0 as a
 			multiple of 100 (100*0 = 0).
 			Supporting evidence: http://mathforum.org/library/drmath/view/60913.html
@@ -22,7 +22,6 @@ import snap
 import random
 from data_loader import DataLoader
 from graph import UNGraph
-from terminaltables import AsciiTable
 from terminaltables import SingleTable
 
 nodes = set()
@@ -35,17 +34,18 @@ def main():
 	random.seed(SEED)
 
 	data = DataLoader(SETTINGS['input_filename'])
+	n_recs = SETTINGS["rec_num"]
 
 	# Get the edges from the input file
 	edges = data.get_edges_from_file()
 	print "Edges set length (unique): %s" % str(len(edges))
-	print "10 random items from the set:\n"
+	print "{0} random items from the set:\n".format(n_recs)
 	print random.sample(edges,10)
 
 	# Get the nodes from the input file
 	nodes = data.get_nodes(edges)
 	print "nodes set length (unique): %s" % str(len(nodes))
-	print "10 random items from the set:\n"
+	print "{0} random items from the set:\n".format(n_recs)
 	print random.sample(nodes,10)
 
 	# Create the undirected graph
@@ -54,16 +54,13 @@ def main():
 
 	for node in SETTINGS["test_nodeIDs"]:
 		print "Computing recommended friendships for node {0} ...".format(node)
-		n_recs = SETTINGS["rec_num"]
 
-		# Show the results for different methods in parallel
-		print "Common Friends method computation ..."
+		# Compute recommendations for Common Neighbour, Jaccard and Adamic & Adar
 		rec_common = un_graph.recommend_friends_CN(node,n_recs)
-		print "Jaccard method computation ..."
 		rec_jaccard = un_graph.recommend_friends_J(node,n_recs)
-		print "Adamic & Adar method computation ..."
 		rec_aa = un_graph.recommend_friends_AA(node,n_recs)
 
+		# Print the results using some fancy ascii art
 		_print_result_tables(node,'Common Friends',rec_common)
 		_print_result_tables(node,'Jaccard',rec_jaccard)
 		_print_result_tables(node,'Adamic & Adar',rec_aa)
@@ -71,14 +68,11 @@ def main():
 	# Get the ids that are mutliples of the configured value (default: 100)
 	node_multiples = [x for x in nodes if x%SETTINGS['multiples'] == 0]
 
-	# For each of those node ids, get top 10 recommendations and scores
-	# We keep both the full output of the recommendation computations as well
-	# as the nodes separately in order to make our lives easier for the comparisons
+	# For each of those node ids, get top N recommendations and scores
+	# We keep both the full output of the recommendation computations as well as
+	# the nodes separately in order to make our lives easier for the comparisons.
 	rec_results = {}
-	same_all   = 0
-	same_cn_j  = 0
-	same_cn_aa = 0
-	same_j_aa  = 0
+	same_all   = same_cn_j = same_cn_aa = same_j_aa = 0
 
 	for node in node_multiples:
 		rec_results[node] = {'cn':{},'j':{},'aa':{}}
@@ -94,7 +88,6 @@ def main():
 
 		# It is not really necessary to keep the boolean outcome of the results comparison
 		# in the dict, but we keep it anyway.
-
 		rec_results[node]['same_all'] =	rec_results[node]['cn']['nodes'] == \
 										rec_results[node]['j']['nodes']  == \
 										rec_results[node]['aa']['nodes']
@@ -108,7 +101,7 @@ def main():
 		rec_results[node]['same_j_aa'] = rec_results[node]['j']['nodes'] == \
 										 rec_results[node]['aa']['nodes']
 
-		# This is very fancy
+		# This is very fancy (I mean it)
 		same_all   += 1*rec_results[node]['same_all']
 		same_cn_j  += 1*rec_results[node]['same_cn_j']
 		same_cn_aa += 1*rec_results[node]['same_cn_aa']
@@ -130,12 +123,10 @@ def main():
 	avg_rank_pref    = []
 	# Perform the experiment the configured amount of times - Default: 100
 	for i in range(SETTINGS['experiments']):
-		# Randomly choose 1 of the friends
+		# Randomly choose 1 of the nodes and then randomly choose one of its current friends
 		F1 = random.choice(node_multiples)
-		# Randomly choose 1 of its friends
 		F2 = random.choice(list(un_graph.graph.GetNI(F1).GetOutEdges()))
-		# print "F1 node id: {0}\tF2 node id: {1}".format(F1,F2)
-		# print "Removing edge [{0},{1}] ...".format(F1,F2)
+		# Remove the edge
 		un_graph.del_edge(F1,F2)
 
 		# Compute friend recommendations after the edge deletion for both F1 and F2
@@ -178,7 +169,7 @@ def main():
 			rank_pref_f2 = f2_rec_pref.index(F1)
 
 		# We won't even consider the random reccommendation here or the bonus ones
-		# or they'll destroy our metrics.
+		# as they'll destroy our metrics - especially the random one.
 		if rank_common_f1 == -1 or rank_common_f2 == -1 \
 			or rank_jaccard_f1 == -1 or rank_jaccard_f2 == -1 \
 			or rank_aa_f1 == -1 or rank_aa_f2 == -1:
@@ -193,14 +184,15 @@ def main():
 		if rank_pref_f1 != -1 and rank_pref_f2 != -1:
 			avg_rank_pref.append((rank_pref_f1 + rank_pref_f2) / 2.0)
 
-
+		# Make sure to re-add the edge we removed earlier
 		un_graph.add_edge(F1,F2)
 
 
+	# Some not fancy printing
 	print "Total Successful Experiments"
 	print "----------------------------"
-	print "Common Hits: {0}".format(len(avg_rank_common))
-	print "Common Avg Rank: {0}".format(sum(avg_rank_common)/float(len(avg_rank_common)))
+	print "Common Neighbours Hits: {0}".format(len(avg_rank_common))
+	print "Common Neighbours Avg Rank: {0}".format(sum(avg_rank_common)/float(len(avg_rank_common)))
 	print "Jaccard Hits: {0}".format(len(avg_rank_jaccard))
 	print "Jaccard Avg Rank: {0}".format(sum(avg_rank_jaccard)/float(len(avg_rank_jaccard)))
 	print "AA Hits: {0}".format(len(avg_rank_aa))
@@ -218,9 +210,8 @@ def main():
 
 def _print_result_tables(node,method,recs):
 	"""
-		This function aims to do a fancy printing of the results into
-		ascii tables. Don't get too excited though. We could also do
-		pipe this to a cowsay for the swag.
+		This function aims to do a fancy printing of the results into ascii tables.
+		Don't get too excited though. We could also pipe this to a cowsay for the extra swag.
 
 		Arguments:
 		- node:	  node id for which we are recommending.
@@ -240,6 +231,7 @@ def _print_result_tables(node,method,recs):
 	print table.table
 
 def _print_comparisons(multiples_len, s_all, s_cn_j, s_cn_aa, s_j_aa):
+	""" YAFPF (Yet Another Fancy Printing Function) """
 	table_data = [['','Same','Total','Percentage']]
 	table_data.append(['ALL',s_all,multiples_len,100*s_all/float(multiples_len)])
 	table_data.append(['CN - J',s_cn_j,multiples_len,100*s_cn_j/float(multiples_len)])
@@ -252,7 +244,6 @@ def _print_comparisons(multiples_len, s_all, s_cn_j, s_cn_aa, s_j_aa):
 	table = SingleTable(table_data)
 	table.inner_footing_row_border = True
 
-	print "Fancy results table:"
 	print table.table
 
 if __name__ == '__main__':

@@ -1,5 +1,3 @@
-import re
-import timeit
 
 class DataLoader(object):
 	""" """
@@ -12,12 +10,9 @@ class DataLoader(object):
 			Simple function to get the set of node ids appearing in the input file
 		"""
 		nodes = []
-
 		for edge in edges:
-			# edge = edge.split()
 			nodes.append(int(edge[0]))
 			nodes.append(int(edge[1]))
-
 		print "nodes list length: %s" % str(len(nodes))
 
 		return set(nodes)
@@ -27,7 +22,6 @@ class DataLoader(object):
 			Get a list of the edges
 		"""
 		edges = []
-
 		with open(self.filename) as f:
 			lines = f.readlines()
 
